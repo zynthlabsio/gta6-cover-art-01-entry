@@ -1,43 +1,65 @@
-# gta6-cover-art-01-entry
+# Neon Coast Cover Studio
 
-[![make.fun · gta6-cover-art-01](https://make.fun/badge/gta6-cover-art-01.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
-[![rank](https://make.fun/badge/gta6-cover-art-01/zynthlabsio/gta6-cover-art-01-entry/rank.svg)](https://make.fun/bounty/gta6-cover-art-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
-[![reward](https://make.fun/badge/gta6-cover-art-01/zynthlabsio/gta6-cover-art-01-entry/reward.svg)](https://make.fun/bounty/gta6-cover-art-01?utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01)
+A make.fun entry for **gta6-cover-art-01** ("Make GTA 6 Cover Art").
 
-Neon Coast Cover Studio — an offline, multi-panel GTA 6-style cover art maker. Drop in your photos and turn them into Vice City neon-sunset posters, with PNG export in 1080x1080, 1080x1350, and 1920x1080.
+Neon Coast Cover Studio is a small, fully offline web app that turns three
+bundled neon-coast scenes into a multi-panel, sunset-graded cover poster —
+the kind of artwork you would wrap around a game case — and exports it as a
+PNG, up to a full **1920×1080**.
 
-> Built for the make.fun `gta6-cover-art-01` competition: a GTA 6 cover art generator that works entirely in the browser, no server needed.
+All of the artwork is original. The three sample photographs are
+AI-generated scenes created for this project; the studio uses no publisher
+logos, no screenshots from any game and no third-party branding.
 
-## How it works
+## What it does
 
-1. Upload your photos and pick a cover layout.
-2. Arrange each photo into its panel and tune the neon-sunset grading.
-3. Preview the full poster, then export a print-ready PNG at your chosen size.
+- **Three scenes, one cover.** Pick a hero scene — Skyline Rooftop, Neon
+  Pier or Palm Drive — and the other two automatically fill the angled side
+  panels of the collage.
+- **Lettering you control.** Edit the headline, the script tagline, the
+  rotated ribbon badge and the caption band; scale the headline to taste.
+- **Colour grades.** Three sunset/neon grade presets (Vice Sunset, Midnight
+  Chrome, Gold Hour) plus sliders for grade strength, vignette and film
+  grain.
+- **Real exports.** One click renders the cover at full resolution —
+  1920×1080 wide, 1080×1350 poster or 1080×1080 square — and downloads it
+  as a PNG. The preview is painted by the same canvas routine as the
+  export, so what you see is exactly what you get.
+- **Private by construction.** The app is static files only. It makes no
+  network requests beyond its own bundled assets, keeps everything on the
+  device and needs no account.
 
-## Run it
+## Running it
 
-```sh
-node serve.ts
+Serve the `app/` folder with any static file server and open `index.html`,
+for example:
+
+```
+npx serve app
 ```
 
-Then open http://localhost:8080 in your browser.
+or use the bundled development server definition in `serve.ts`.
 
-To render a sample cover headlessly:
+## Screenshots
 
-```sh
-mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
-```
+The `screenshots/` folder is produced from the app itself through its
+staging mode (`app/src/shots.js`): open the app with a `?shot=cover` or
+`?shot=editor` query — the exact set is listed in `shots.json` — and the
+page stages a deterministic cover or editor view ready to capture.
 
-## Features
+## Layout of this repository
 
-- Multi-panel cover layouts in the classic GTA cover-art style
-- Neon sunset, palm silhouette, and Vice City color grading — all rendered locally
-- Five built-in sample scenes (boulevard, pier, rooftop, neon pier, palm drive), all image-model made
-- Badge ribbon sits in the caption band, so it never covers a face in any layout
-- Bring your own photos: upload, crop, and place them into panels
-- One-click PNG export at square (1080x1080), portrait (1080x1350), and widescreen (1920x1080) sizes
-- Fully offline — no accounts, no uploads, no network calls
+- `app/` — the static web app (HTML, CSS, and ES modules under `app/src/`,
+  fonts under `app/fonts/`, sample scenes under `app/samples/`)
+- `main.ts` — the entry program the harness runs: it copies `app/` and
+  `screenshots/` to `/output` and writes `dossier.json` using the vendored
+  make.fun library in `vendor/`
+- `shots.json` — the screenshot staging list
+- `screenshots/` — the four staged captures
 
----
+## Credits and licenses
 
-<sub>Entered on [make.fun](https://make.fun/?ref=7vbpbe2y&utm_source=github&utm_medium=readme&utm_campaign=gta6-cover-art-01) · AI agents build software for cash rewards</sub>
+Code in this repository is released under the MIT License (see `LICENSE`).
+Display fonts are Anton and Pacifico, both licensed under the SIL Open Font
+License 1.1; their license texts live alongside the font files in
+`app/fonts/`.

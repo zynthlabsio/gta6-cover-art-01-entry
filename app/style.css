@@ -1,135 +1,285 @@
-@font-face { font-family: 'Anton'; src: url('./fonts/Anton-Regular.ttf') format('truetype'); font-display: swap; }
-@font-face { font-family: 'Pacifico'; src: url('./fonts/Pacifico-Regular.ttf') format('truetype'); font-display: swap; }
+/* Neon Coast Cover Studio — stylesheet.
+   A dark studio theme: near-black violet room, neon pink/orange accents,
+   condensed display type for headings and a clean sans for the controls. */
+
+@font-face {
+  font-family: 'Anton';
+  src: url('fonts/Anton-Regular.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pacifico';
+  src: url('fonts/Pacifico-Regular.ttf') format('truetype');
+  font-display: swap;
+}
 
 :root {
-  --ink: #f5eefc;
-  --muted: #b9a8cc;
-  --panel: #1c1026;
-  --panel2: #251636;
-  --line: #3d2a55;
-  --pink: #ff2e88;
-  --teal: #19d3da;
-  --amber: #ffb347;
-  --bg: #120a1c;
+  --room: #0d0718;
+  --room-2: #160b2c;
+  --panel: #1d1138;
+  --panel-edge: #37215e;
+  --ink: #f4efff;
+  --ink-dim: #b9a8dd;
+  --pink: #ff5ea8;
+  --orange: #ffb03a;
+  --cyan: #40e0ff;
+  --radius: 14px;
 }
+
 * { box-sizing: border-box; }
-html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; }
-body { display: flex; flex-direction: column; }
-.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 22px; background: linear-gradient(90deg, #2b0f3f, #5b0f4d 55%, #0f2a4d); border-bottom: 2px solid var(--pink); }
-.brand { display: flex; align-items: center; gap: 14px; }
-.brand-mark { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 10px; background: linear-gradient(135deg, var(--pink), #ff7b00); font-family: 'Anton', sans-serif; font-size: 20px; color: #fff; letter-spacing: 1px; box-shadow: 0 0 18px rgba(255, 46, 136, 0.55); }
-.brand h1 { margin: 0; font-family: 'Anton', sans-serif; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; color: #fff; text-shadow: 2px 2px 0 var(--pink), 4px 4px 0 rgba(25, 211, 218, 0.6); }
-.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
-.top-actions button { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; }
-.top-actions button:hover { border-color: var(--pink); }
-.app { display: flex; gap: 22px; padding: 18px 22px 26px; flex: 1; align-items: flex-start; }
-.controls { width: 330px; flex: none; display: flex; flex-direction: column; gap: 14px; }
-.group { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
-.group h2 { margin: 0 0 10px; font-family: 'Anton', sans-serif; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; color: var(--amber); }
-.group label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; margin-bottom: 10px; }
-.group label:last-child { margin-bottom: 0; }
-input[type=text], select { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: #160b22; color: var(--ink); }
-input[type=text]:focus, select:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
-input[type=range] { width: 100%; accent-color: var(--pink); }
-.file-btn { display: block; text-align: center; background: linear-gradient(135deg, var(--pink), #7b2ff7); color: #fff; font-weight: 800; padding: 11px; border-radius: 9px; cursor: pointer; margin-bottom: 10px; }
-.file-btn input { display: none; }
-.row { display: flex; gap: 8px; margin-bottom: 10px; }
-.row button { flex: 1; }
-button { font: inherit; font-weight: 700; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); color: var(--ink); cursor: pointer; }
-button:hover { border-color: var(--pink); }
-.choices { display: flex; flex-wrap: wrap; gap: 8px; }
-.choice { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; }
-.choice.on { background: var(--pink); border-color: var(--pink); color: #fff; box-shadow: 0 0 14px rgba(255, 46, 136, 0.5); }
-.sw { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.5); flex: none; }
-.hint { color: var(--muted); font-size: 12.5px; margin: 0 0 10px; }
-.check { flex-direction: row !important; align-items: center; gap: 8px; font-weight: 600; }
-.check input { accent-color: var(--pink); width: 17px; height: 17px; }
-.exports { display: flex; flex-direction: column; gap: 8px; }
-.exports button { background: linear-gradient(135deg, #ff7b00, var(--pink)); border: 0; color: #fff; padding: 11px; }
-.exports button:hover { filter: brightness(1.12); }
-#status { margin: 10px 0 0; color: #8dffd6; min-height: 1.2em; font-weight: 600; }
-.stage { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; position: sticky; top: 12px; }
-#cover { width: min(72vh, 100%); aspect-ratio: 1 / 1; height: auto; background: #241233; border-radius: 6px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--line); cursor: crosshair; }
-.stage-hint, .stage-note { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }
-.stage-note { font-size: 12px; max-width: 560px; }
-body.shot-cover .topbar, body.shot-cover .controls, body.shot-cover .stage-hint, body.shot-cover .stage-note { display: none; }
-body.shot-cover .app { padding: 0; }
-body.shot-cover .stage { position: static; width: 100%; }
-body.shot-cover #cover { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
-button:focus-visible, .file-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+html, body { margin: 0; padding: 0; }
+
+body {
+  background:
+    radial-gradient(1100px 500px at 85% -10%, rgba(255, 94, 168, 0.16), transparent 60%),
+    radial-gradient(900px 480px at -10% 110%, rgba(64, 224, 255, 0.10), transparent 60%),
+    linear-gradient(180deg, var(--room-2), var(--room));
+  color: var(--ink);
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  padding: 34px 20px 8px;
+  text-align: center;
+}
+.mast-inner { max-width: 880px; margin: 0 auto; }
+.mast-kicker {
+  margin: 0 0 6px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--cyan);
+}
+.mast-title {
+  margin: 0;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: clamp(38px, 6vw, 64px);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: linear-gradient(92deg, #fff6d8 10%, var(--pink) 55%, var(--orange) 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.mast-title span { display: inline-block; }
+.mast-sub {
+  margin: 10px auto 0;
+  max-width: 640px;
+  color: var(--ink-dim);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* ---------- layout ---------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.9fr) minmax(300px, 1fr);
+  gap: 22px;
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: 22px 20px 10px;
+  align-items: start;
+}
 @media (max-width: 900px) {
-  .app { flex-direction: column; }
-  .controls { width: 100%; }
-  .stage { position: static; width: 100%; }
-  .brand h1 { font-size: 20px; }
+  .layout { grid-template-columns: 1fr; }
 }
 
-/* ---------------------------------------------------------------------------
-   v2 polish — accessibility and editor chrome only.
-   None of the rules below alter the default appearance, layout, colours or
-   cover rendering: focus outlines appear only for keyboard navigation,
-   reduced-motion styles apply only when the visitor requests them, the
-   selection colour applies only to selected text, and the scrollbar rules
-   style the editor's scrollable panels without changing their size or flow.
-   --------------------------------------------------------------------------- */
+/* ---------- stage ---------- */
 
-/* Visible keyboard focus for every interactive element, in the app's
-   existing teal accent (the same colour already used for input focus). */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid var(--teal);
-  outline-offset: 2px;
+.stage-frame {
+  background: #05030d;
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--radius);
+  padding: 10px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 94, 168, 0.08);
 }
-.file-btn:focus-within {
-  outline: 2px solid var(--teal);
-  outline-offset: 2px;
+#stage {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
 }
-
-/* Selected text in the app's palette: pink highlight, white foreground,
-   matching the active choice chips above. */
-::selection {
-  background: var(--pink);
-  color: #fff;
+.status {
+  min-height: 1.4em;
+  margin: 12px 4px 0;
+  color: var(--ink-dim);
+  font-size: 13.5px;
 }
-
-/* Thin scrollbars for the editor's scrollable panels (the control column
-   and the page itself), tinted with the existing panel/line palette. */
-.controls,
-html {
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) var(--panel);
+.export-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
-.controls::-webkit-scrollbar,
-html::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-.controls::-webkit-scrollbar-track,
-html::-webkit-scrollbar-track {
+.format-label { font-size: 13px; color: var(--ink-dim); }
+select {
   background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--panel-edge);
+  border-radius: 9px;
+  padding: 9px 10px;
+  font-size: 14px;
 }
-.controls::-webkit-scrollbar-thumb,
-html::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 4px;
+.export-btn {
+  margin-left: auto;
+  font-family: 'Anton', sans-serif;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 16px;
+  color: #1c0b2e;
+  background: linear-gradient(92deg, var(--orange), var(--pink));
+  border: none;
+  border-radius: 10px;
+  padding: 12px 26px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(255, 94, 168, 0.35);
 }
-.controls::-webkit-scrollbar-thumb:hover,
-html::-webkit-scrollbar-thumb:hover {
-  background: var(--pink);
+.export-btn:hover { filter: brightness(1.08); }
+.export-btn:active { transform: translateY(1px); }
+
+/* ---------- control deck ---------- */
+
+.deck { display: flex; flex-direction: column; gap: 16px; }
+.panel {
+  background: rgba(29, 17, 56, 0.85);
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--radius);
+  padding: 16px 18px 18px;
+}
+.panel h2 {
+  margin: 0 0 8px;
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffd9ec;
+}
+.hint { margin: 0 0 12px; font-size: 13px; line-height: 1.5; color: var(--ink-dim); }
+.fine-print p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--ink-dim); }
+
+.scene-cards { display: flex; flex-direction: column; gap: 10px; }
+.scene-card {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  align-items: center;
+  text-align: left;
+  background: #140a28;
+  color: var(--ink);
+  border: 2px solid var(--panel-edge);
+  border-radius: 12px;
+  padding: 8px;
+  cursor: pointer;
+  font: inherit;
+}
+.scene-card img {
+  grid-row: 1 / 3;
+  width: 86px;
+  height: 58px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.scene-card[aria-pressed="true"] {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 1px var(--pink), 0 6px 18px rgba(255, 94, 168, 0.25);
+}
+.scene-name { font-weight: 600; font-size: 14.5px; }
+.scene-blurb { font-size: 12.5px; color: var(--ink-dim); line-height: 1.4; }
+
+.field { display: block; margin-bottom: 12px; }
+.field span, .slider-row span {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-dim);
+  margin-bottom: 6px;
+}
+.field input[type="text"] {
+  width: 100%;
+  background: #140a28;
+  border: 1px solid var(--panel-edge);
+  border-radius: 9px;
+  color: var(--ink);
+  padding: 9px 11px;
+  font-size: 14.5px;
+}
+.field input[type="text"]:focus, select:focus, .scene-card:focus-visible,
+.swatch:focus-visible, .export-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.slider-row { display: block; margin-top: 12px; }
+.slider-row output { color: var(--ink); font-variant-numeric: tabular-nums; }
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--pink);
+  cursor: pointer;
 }
 
-/* Respect a visitor's reduced-motion request: no transitions or
-   animations anywhere in the editor. */
+.preset-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.swatch {
+  --sw-a: #ff5ea8;
+  --sw-b: #ffb03a;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: linear-gradient(120deg, var(--sw-a), var(--sw-b));
+  border: 2px solid transparent;
+  border-radius: 999px;
+  padding: 7px 14px;
+  cursor: pointer;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+.swatch[aria-pressed="true"] { border-color: #fff; }
+
+/* ---------- footer ---------- */
+
+.colophon {
+  max-width: 1460px;
+  margin: 0 auto;
+  padding: 14px 20px 30px;
+  color: var(--ink-dim);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.mono { font-family: ui-monospace, Consolas, monospace; }
+
+/* ---------- screenshot staging modes ---------- */
+
+/* Cover mode: nothing but the artwork, edge to edge. */
+body[data-shot="cover"] { background: #000; }
+body[data-shot="cover"] .masthead,
+body[data-shot="cover"] .deck,
+body[data-shot="cover"] .colophon,
+body[data-shot="cover"] .export-bar,
+body[data-shot="cover"] .status { display: none; }
+body[data-shot="cover"] .layout {
+  display: block;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+body[data-shot="cover"] .stage-frame {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  background: #000;
+}
+body[data-shot="cover"] #stage { border-radius: 0; width: 100vw; }
+
+/* Editor staging keeps the full UI but freezes motion for a stable frame. */
+body[data-shot] * { animation: none !important; transition: none !important; }
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0s !important;
-    scroll-behavior: auto !important;
-  }
+  * { animation: none !important; transition: none !important; }
 }

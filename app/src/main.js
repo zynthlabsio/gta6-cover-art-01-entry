@@ -1,324 +1,278 @@
-// Neon Coast Cover Studio: wires the editor — photos, layout, grade, caption, effects,
-// per-panel crop and position, undo/redo, and one-click PNG export in three post sizes.
-// A `?shot=` query sets up a fixed scene for a screenshot instead (./shots.js).
-import { drawCover, renderCoverAtSize, panelCount, layoutPanels } from './cover.js';
-import { runShot } from './shots.js';
+// main.js — Neon Coast Cover Studio: editor wiring.
+//
+// Boots the studio: loads the three sample scenes, binds every control in
+// the deck to the cover state, repaints the preview canvas on any change,
+// and renders the full-resolution PNG export on demand. Also honours the
+// screenshot staging mode described in shots.js.
+//
+// The preview canvas is kept at the export format's aspect ratio and painted
+// by the same paintCoverArt routine as the export, so what the user sees is
+// the file they will download.
 
-const canvas = document.getElementById('cover');
-const statusEl = document.getElementById('status');
-const panelSelect = document.getElementById('panel-select');
-const zoomInput = document.getElementById('zoom');
-const panxInput = document.getElementById('panx');
-const panyInput = document.getElementById('pany');
+import {
+  SCENE_LIST,
+  GRADE_PRESETS,
+  FORMAT_LIST,
+  formatById,
+  paintCoverArt,
+} from './cover.js';
+import { readShotRequest, markStaged } from './shots.js';
 
-const SAMPLES = {
-  boulevard: 'samples/boulevard.jpg',
-  pier: 'samples/pier.jpg',
-  rooftop: 'samples/rooftop.jpg',
-  'neon-pier': 'samples/neon-pier.jpg',
-  'palm-drive': 'samples/palm-drive.jpg',
+const state = {
+  sceneId: 'neon-pier',
+  title: 'NEON COAST',
+  tagline: 'vice nights, fast lights',
+  ribbon: 'STUDIO EXCLUSIVE',
+  caption: 'One city. Every story.',
+  presetId: 'sunset',
+  formatId: 'wide',
+  grade: 0.85,
+  vignette: 0.55,
+  grain: 0.5,
+  titleScale: 1,
 };
 
-/** The whole editable cover: layout, grade, caption, effects and one slot per panel. */
-export const state = {
-  layout: 'hero-three',
-  grade: 'neon-sunset',
-  title: 'SUNSET HEIST',
-  subtitle: 'Vice City nights',
-  badge: 'EST. 2026',
-  grain: true,
-  vignette: true,
-  halftone: true,
-  frame: true,
-  photos: [],
-  panels: Array.from({ length: 9 }, () => ({ photoIndex: -1, zoom: 1.2, ox: 0, oy: 0 })),
-  selected: 0,
-};
-
-let history = [];
-let historyIndex = -1;
+const images = {};
 let fontsReady = false;
 
-function snapshot() {
-  return JSON.stringify({
-    layout: state.layout, grade: state.grade, title: state.title,
-    subtitle: state.subtitle, badge: state.badge, grain: state.grain,
-    vignette: state.vignette, halftone: state.halftone, frame: state.frame,
-    panels: state.panels, selected: state.selected,
-    photoSrcs: state.photos.map((p) => p.dataset.src || ''),
-  });
-}
+const canvas = document.getElementById('stage');
+const ctx = canvas.getContext('2d');
+const statusLine = document.getElementById('statusLine');
 
-function pushHistory() {
-  history = history.slice(0, historyIndex + 1);
-  history.push(snapshot());
-  if (history.length > 40) history.shift();
-  historyIndex = history.length - 1;
-}
+// ---------------------------------------------------------------------------
+// Asset loading. The studio is fully offline: the only requests it ever
+// makes are for its own bundled files.
+// ---------------------------------------------------------------------------
 
-function restoreHistory(json) {
-  const s = JSON.parse(json);
-  state.layout = s.layout; state.grade = s.grade; state.title = s.title;
-  state.subtitle = s.subtitle; state.badge = s.badge; state.grain = s.grain;
-  state.vignette = s.vignette; state.halftone = s.halftone; state.frame = s.frame;
-  state.panels = s.panels; state.selected = s.selected;
-  syncControls();
-  redraw();
-}
-
-function undo() {
-  if (historyIndex <= 0) return;
-  historyIndex -= 1;
-  restoreHistory(history[historyIndex]);
-}
-function redo() {
-  if (historyIndex >= history.length - 1) return;
-  historyIndex += 1;
-  restoreHistory(history[historyIndex]);
-}
-
-/** Loads an image from a URL, resolving once it can be drawn. */
-export function loadImage(url) {
+function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = url;
+    img.onerror = () => reject(new Error(`could not load ${src}`));
+    img.src = src;
   });
 }
 
-async function ensureFonts() {
-  if (fontsReady) return;
+async function loadAssets() {
+  const jobs = SCENE_LIST.map(async (scene) => {
+    images[scene.id] = await loadImage(scene.file);
+  });
+  await Promise.all(jobs);
+  // Canvas lettering needs the bundled display faces actually loaded, not
+  // merely declared, before the first paint.
   try {
     await Promise.all([
-      document.fonts.load('80px Anton'),
-      document.fonts.load('40px Pacifico'),
+      document.fonts.load("80px 'Anton'"),
+      document.fonts.load("40px 'Pacifico'"),
     ]);
-  } catch { /* fall back to system fonts; the cover still draws */ }
+    await document.fonts.ready;
+  } catch (err) {
+    // Fallback fonts still render a cover; lettering just looks plainer.
+    console.warn('display fonts unavailable, using fallbacks', err);
+  }
   fontsReady = true;
 }
 
-function redraw() {
-  drawCover(canvas, state);
+// ---------------------------------------------------------------------------
+// Painting.
+// ---------------------------------------------------------------------------
+
+function sizePreviewCanvas() {
+  const fmt = formatById(state.formatId);
+  // Preview at half resolution: crisp on retina-ish displays, cheap to
+  // repaint on every keystroke.
+  canvas.width = Math.round(fmt.w / 2);
+  canvas.height = Math.round(fmt.h / 2);
 }
 
-function syncControls() {
-  document.querySelectorAll('#layouts .choice').forEach((b) => b.classList.toggle('on', b.dataset.layout === state.layout));
-  document.querySelectorAll('#grades .choice').forEach((b) => b.classList.toggle('on', b.dataset.grade === state.grade));
-  document.getElementById('title').value = state.title;
-  document.getElementById('subtitle').value = state.subtitle;
-  document.getElementById('badge').value = state.badge;
-  document.getElementById('fx-grain').checked = state.grain;
-  document.getElementById('fx-vignette').checked = state.vignette;
-  document.getElementById('fx-halftone').checked = state.halftone;
-  document.getElementById('fx-frame').checked = state.frame;
-  rebuildPanelSelect();
-  syncPanelControls();
+function repaint() {
+  if (!fontsReady) return;
+  paintCoverArt(ctx, canvas.width, canvas.height, state, images);
 }
 
-function rebuildPanelSelect() {
-  const n = panelCount(state.layout);
-  panelSelect.innerHTML = '';
-  for (let i = 0; i < n; i++) {
+function setStatus(message) {
+  statusLine.textContent = message;
+}
+
+// ---------------------------------------------------------------------------
+// Control deck construction. Scene cards and preset swatches are built from
+// the catalogues in cover.js so the HTML stays declarative and short.
+// ---------------------------------------------------------------------------
+
+function buildSceneCards() {
+  const host = document.getElementById('sceneCards');
+  SCENE_LIST.forEach((scene) => {
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'scene-card';
+    card.dataset.scene = scene.id;
+    card.setAttribute('aria-pressed', String(scene.id === state.sceneId));
+
+    const thumb = document.createElement('img');
+    thumb.src = scene.file;
+    thumb.alt = scene.label;
+    thumb.loading = 'lazy';
+
+    const name = document.createElement('span');
+    name.className = 'scene-name';
+    name.textContent = scene.label;
+
+    const blurb = document.createElement('span');
+    blurb.className = 'scene-blurb';
+    blurb.textContent = scene.blurb;
+
+    card.append(thumb, name, blurb);
+    card.addEventListener('click', () => {
+      state.sceneId = scene.id;
+      host.querySelectorAll('.scene-card').forEach((el) => {
+        el.setAttribute('aria-pressed', String(el.dataset.scene === scene.id));
+      });
+      repaint();
+      setStatus(`Hero scene: ${scene.label}. The other two fill the side panels.`);
+    });
+    host.append(card);
+  });
+}
+
+function buildPresetSwatches() {
+  const host = document.getElementById('presetRow');
+  GRADE_PRESETS.forEach((preset) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'swatch';
+    btn.dataset.preset = preset.id;
+    btn.textContent = preset.label;
+    btn.setAttribute('aria-pressed', String(preset.id === state.presetId));
+    btn.style.setProperty('--sw-a', preset.headTo);
+    btn.style.setProperty('--sw-b', preset.accent);
+    btn.addEventListener('click', () => {
+      state.presetId = preset.id;
+      host.querySelectorAll('.swatch').forEach((el) => {
+        el.setAttribute('aria-pressed', String(el.dataset.preset === preset.id));
+      });
+      repaint();
+      setStatus(`Colour grade: ${preset.label}.`);
+    });
+    host.append(btn);
+  });
+}
+
+function buildFormatSelect() {
+  const select = document.getElementById('formatSelect');
+  FORMAT_LIST.forEach((fmt) => {
     const opt = document.createElement('option');
-    opt.value = String(i);
-    opt.textContent = `Panel ${i + 1}${state.layout === 'hero-three' && i === 0 ? ' (hero)' : ''}`;
-    panelSelect.appendChild(opt);
-  }
-  panelSelect.value = String(Math.min(state.selected, n - 1));
+    opt.value = fmt.id;
+    opt.textContent = fmt.label;
+    select.append(opt);
+  });
+  select.value = state.formatId;
+  select.addEventListener('change', () => {
+    state.formatId = select.value;
+    sizePreviewCanvas();
+    repaint();
+    const fmt = formatById(state.formatId);
+    setStatus(`Export size set to ${fmt.w}×${fmt.h}.`);
+  });
 }
 
-function syncPanelControls() {
-  if (state.selected < 0) return;
-  const p = state.panels[state.selected];
-  zoomInput.value = String(p.zoom);
-  panxInput.value = String(Math.round(p.ox * 100));
-  panyInput.value = String(Math.round(p.oy * 100));
-  document.getElementById('zoom-val').textContent = `${p.zoom.toFixed(2)}×`;
-  document.getElementById('panx-val').textContent = String(Math.round(p.ox * 100));
-  document.getElementById('pany-val').textContent = String(Math.round(p.oy * 100));
-  panelSelect.value = String(state.selected);
+function bindTextField(id, key, note) {
+  const input = document.getElementById(id);
+  input.value = state[key];
+  input.addEventListener('input', () => {
+    state[key] = input.value;
+    repaint();
+    if (note) setStatus(note);
+  });
 }
 
-function selectPanel(i, record = true) {
-  const n = panelCount(state.layout);
-  state.selected = Math.max(0, Math.min(n - 1, i));
-  syncPanelControls();
-  redraw();
-  if (record) pushHistory();
+function bindSlider(id, key, formatNote) {
+  const input = document.getElementById(id);
+  const readout = document.querySelector(`[data-readout="${id}"]`);
+  input.value = String(Math.round(state[key] * 100));
+  const sync = () => {
+    state[key] = Number(input.value) / 100;
+    if (readout) readout.textContent = `${input.value}%`;
+    repaint();
+    if (formatNote) setStatus(formatNote(input.value));
+  };
+  input.addEventListener('input', sync);
 }
 
-/** Adds an image to the photo tray and puts it in the selected panel. */
-export function addPhoto(img, srcLabel) {
-  img.dataset.src = srcLabel || '';
-  state.photos.push(img);
-  const idx = state.photos.length - 1;
-  state.panels[state.selected].photoIndex = idx;
-  syncPanelControls();
-  redraw();
-  pushHistory();
-  return idx;
-}
+// ---------------------------------------------------------------------------
+// Export: paint once more onto a full-resolution offscreen canvas and hand
+// the browser a PNG download.
+// ---------------------------------------------------------------------------
 
-/** Which panel (if any) sits under a point on the displayed canvas. */
-export function panelAtPoint(clientX, clientY) {
-  const r = canvas.getBoundingClientRect();
-  const x = ((clientX - r.left) / r.width) * canvas.width;
-  const y = ((clientY - r.top) / r.height) * canvas.height;
-  const panels = layoutPanels(state.layout, canvas.width, canvas.height);
-  const n = panelCount(state.layout);
-  for (let i = n - 1; i >= 0; i--) {
-    const p = panels[i];
-    if (x >= p.x && x <= p.x + p.w && y >= p.y && y <= p.y + p.h) return i;
-  }
-  return -1;
-}
-
-let dragging = null;
-canvas.addEventListener('pointerdown', (e) => {
-  const i = panelAtPoint(e.clientX, e.clientY);
-  if (i < 0) return;
-  selectPanel(i, false);
-  dragging = { x: e.clientX, y: e.clientY };
-  canvas.setPointerCapture(e.pointerId);
-});
-canvas.addEventListener('pointermove', (e) => {
-  if (!dragging) return;
-  const r = canvas.getBoundingClientRect();
-  const p = state.panels[state.selected];
-  const panels = layoutPanels(state.layout, canvas.width, canvas.height);
-  const rect = panels[state.selected];
-  p.ox = Math.max(-1, Math.min(1, p.ox - ((e.clientX - dragging.x) / r.width) * (canvas.width / rect.w) * 2));
-  p.oy = Math.max(-1, Math.min(1, p.oy - ((e.clientY - dragging.y) / r.height) * (canvas.height / rect.h) * 2));
-  dragging = { x: e.clientX, y: e.clientY };
-  syncPanelControls();
-  redraw();
-});
-canvas.addEventListener('pointerup', () => {
-  if (dragging) { dragging = null; pushHistory(); }
-});
-
-document.getElementById('photos').addEventListener('change', async (e) => {
-  const files = [...e.target.files];
-  for (const file of files) {
-    const img = await loadImage(URL.createObjectURL(file));
-    addPhoto(img, file.name);
-  }
-  statusEl.textContent = files.length ? `${files.length} photo${files.length > 1 ? 's' : ''} added to panel ${state.selected + 1}.` : '';
-  e.target.value = '';
-});
-
-async function loadSample(name) {
-  const img = await loadImage(SAMPLES[name]);
-  addPhoto(img, SAMPLES[name]);
-  statusEl.textContent = `Sample "${name}" loaded into panel ${state.selected + 1}.`;
-}
-document.getElementById('sample-boulevard').addEventListener('click', () => loadSample('boulevard'));
-document.getElementById('sample-pier').addEventListener('click', () => loadSample('pier'));
-document.getElementById('sample-rooftop').addEventListener('click', () => loadSample('rooftop'));
-document.getElementById('sample-neon-pier').addEventListener('click', () => loadSample('neon-pier'));
-document.getElementById('sample-palm-drive').addEventListener('click', () => loadSample('palm-drive'));
-
-document.getElementById('fill-all').addEventListener('click', () => {
-  const src = state.panels[state.selected].photoIndex;
-  if (src < 0) { statusEl.textContent = 'Load a photo into the selected panel first.'; return; }
-  const n = panelCount(state.layout);
-  for (let i = 0; i < n; i++) state.panels[i].photoIndex = src;
-  redraw();
-  pushHistory();
-  statusEl.textContent = 'All panels filled with the selected photo.';
-});
-document.getElementById('clear-panel').addEventListener('click', () => {
-  state.panels[state.selected].photoIndex = -1;
-  redraw();
-  pushHistory();
-});
-
-panelSelect.addEventListener('change', () => selectPanel(Number(panelSelect.value)));
-zoomInput.addEventListener('input', () => {
-  state.panels[state.selected].zoom = Number(zoomInput.value);
-  syncPanelControls();
-  redraw();
-});
-zoomInput.addEventListener('change', pushHistory);
-panxInput.addEventListener('input', () => {
-  state.panels[state.selected].ox = Number(panxInput.value) / 100;
-  syncPanelControls();
-  redraw();
-});
-panyInput.addEventListener('input', () => {
-  state.panels[state.selected].oy = Number(panyInput.value) / 100;
-  syncPanelControls();
-  redraw();
-});
-panxInput.addEventListener('change', pushHistory);
-panyInput.addEventListener('change', pushHistory);
-
-document.querySelectorAll('#layouts .choice').forEach((b) => b.addEventListener('click', () => {
-  state.layout = b.dataset.layout;
-  state.selected = 0;
-  syncControls();
-  redraw();
-  pushHistory();
-}));
-document.querySelectorAll('#grades .choice').forEach((b) => b.addEventListener('click', () => {
-  state.grade = b.dataset.grade;
-  syncControls();
-  redraw();
-  pushHistory();
-}));
-
-document.getElementById('title').addEventListener('input', (e) => { state.title = e.target.value; redraw(); });
-document.getElementById('title').addEventListener('change', pushHistory);
-document.getElementById('subtitle').addEventListener('input', (e) => { state.subtitle = e.target.value; redraw(); });
-document.getElementById('subtitle').addEventListener('change', pushHistory);
-document.getElementById('badge').addEventListener('input', (e) => { state.badge = e.target.value; redraw(); });
-document.getElementById('badge').addEventListener('change', pushHistory);
-document.getElementById('fx-grain').addEventListener('change', (e) => { state.grain = e.target.checked; redraw(); pushHistory(); });
-document.getElementById('fx-vignette').addEventListener('change', (e) => { state.vignette = e.target.checked; redraw(); pushHistory(); });
-document.getElementById('fx-halftone').addEventListener('change', (e) => { state.halftone = e.target.checked; redraw(); pushHistory(); });
-document.getElementById('fx-frame').addEventListener('change', (e) => { state.frame = e.target.checked; redraw(); pushHistory(); });
-
-document.getElementById('undo').addEventListener('click', undo);
-document.getElementById('redo').addEventListener('click', redo);
-
-/** Exports the cover at one post size as a PNG download. */
-export function exportCover(w, h) {
-  const out = renderCoverAtSize(state, w, h);
+function exportPng() {
+  const fmt = formatById(state.formatId);
+  const out = document.createElement('canvas');
+  out.width = fmt.w;
+  out.height = fmt.h;
+  paintCoverArt(out.getContext('2d'), fmt.w, fmt.h, state, images);
   out.toBlob((blob) => {
-    if (!blob) { statusEl.textContent = 'Export failed — try again.'; return; }
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `neon-coast-cover-${w}x${h}.png`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    statusEl.textContent = `Saved neon-coast-cover-${w}x${h}.png`;
+    if (!blob) {
+      setStatus('Export failed — the browser refused to encode the PNG.');
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `neon-coast-cover-${fmt.w}x${fmt.h}.png`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    setStatus(`Exported a ${fmt.w}×${fmt.h} PNG. Check your downloads folder.`);
   }, 'image/png');
 }
-document.getElementById('export-square').addEventListener('click', () => exportCover(1080, 1080));
-document.getElementById('export-portrait').addEventListener('click', () => exportCover(1080, 1350));
-document.getElementById('export-wide').addEventListener('click', () => exportCover(1920, 1080));
 
-/** Boots the editor: fonts, two sample photos (boulevard in the hero, pier below), first draw. */
-export async function boot() {
-  await ensureFonts();
-  const boulevard = await loadImage(SAMPLES.boulevard);
-  const pier = await loadImage(SAMPLES.pier);
-  boulevard.dataset.src = SAMPLES.boulevard;
-  pier.dataset.src = SAMPLES.pier;
-  state.photos = [boulevard, pier];
-  state.panels[0].photoIndex = 0;
-  state.panels[0].zoom = 1.05;
-  state.panels[0].oy = -0.5;
-  for (let i = 1; i < 9; i++) { state.panels[i].photoIndex = 1; state.panels[i].zoom = 1.1; state.panels[i].oy = -0.2; }
-  syncControls();
-  redraw();
-  pushHistory();
+// ---------------------------------------------------------------------------
+// Boot.
+// ---------------------------------------------------------------------------
+
+async function boot() {
+  const shot = readShotRequest();
+  if (shot) {
+    Object.assign(state, shot.overrides);
+    markStaged(shot.mode);
+  }
+
+  buildSceneCards();
+  buildPresetSwatches();
+  buildFormatSelect();
+  bindTextField('titleField', 'title');
+  bindTextField('taglineField', 'tagline');
+  bindTextField('ribbonField', 'ribbon');
+  bindTextField('captionField', 'caption');
+  bindSlider('gradeSlider', 'grade', (v) => `Sunset grade at ${v}%.`);
+  bindSlider('vignetteSlider', 'vignette');
+  bindSlider('grainSlider', 'grain');
+  bindSlider('titleSlider', 'titleScale', (v) => `Headline size ${v}%.`);
+  document.getElementById('exportBtn').addEventListener('click', exportPng);
+
+  // If staging asked for a different scene than the deck default, reflect it.
+  document.querySelectorAll('.scene-card').forEach((el) => {
+    el.setAttribute('aria-pressed', String(el.dataset.scene === state.sceneId));
+  });
+  document.getElementById('formatSelect').value = state.formatId;
+
+  sizePreviewCanvas();
+  try {
+    await loadAssets();
+  } catch (err) {
+    setStatus(`Sample scenes failed to load: ${err.message}`);
+    return;
+  }
+  repaint();
+  if (shot && shot.mode === 'cover') {
+    // In cover staging the canvas itself is the deliverable: flag readiness
+    // on the document so the capture tool knows the paint is final.
+    document.documentElement.dataset.ready = 'yes';
+    setStatus('Staged cover ready.');
+  } else {
+    document.documentElement.dataset.ready = 'yes';
+    setStatus('Studio ready. Pick a scene, tune the lettering, export your cover.');
+  }
 }
 
-const shot = new URLSearchParams(location.search).get('shot');
-if (shot) {
-  runShot(shot, new URLSearchParams(location.search), { boot, state, redraw, ensureFonts, loadImage, SAMPLES, addPhoto, syncControls });
-} else {
-  boot();
-}
+boot();
