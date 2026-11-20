@@ -11,7 +11,13 @@ const zoomInput = document.getElementById('zoom');
 const panxInput = document.getElementById('panx');
 const panyInput = document.getElementById('pany');
 
-const SAMPLES = { boulevard: 'samples/boulevard.jpg', pier: 'samples/pier.jpg' };
+const SAMPLES = {
+  boulevard: 'samples/boulevard.jpg',
+  pier: 'samples/pier.jpg',
+  rooftop: 'samples/rooftop.jpg',
+  'neon-pier': 'samples/neon-pier.jpg',
+  'palm-drive': 'samples/palm-drive.jpg',
+};
 
 /** The whole editable cover: layout, grade, caption, effects and one slot per panel. */
 export const state = {
@@ -209,6 +215,9 @@ async function loadSample(name) {
 }
 document.getElementById('sample-boulevard').addEventListener('click', () => loadSample('boulevard'));
 document.getElementById('sample-pier').addEventListener('click', () => loadSample('pier'));
+document.getElementById('sample-rooftop').addEventListener('click', () => loadSample('rooftop'));
+document.getElementById('sample-neon-pier').addEventListener('click', () => loadSample('neon-pier'));
+document.getElementById('sample-palm-drive').addEventListener('click', () => loadSample('palm-drive'));
 
 document.getElementById('fill-all').addEventListener('click', () => {
   const src = state.panels[state.selected].photoIndex;

@@ -5,9 +5,11 @@
 // and writes /output/dossier.json, the summary the judge reads, with the vendored make.fun library.
 // The app turns any photo and caption into multi-panel GTA-style cover art — five layouts, five colour
 // grades, per-panel crop and position, grain, vignette and a halftone title block — exported as a PNG in
-// 1080 x 1080, 1080 x 1350 or 1920 x 1080. Its two sample photos (app/samples/) were made for make.fun
-// with an image model and are free to use. Build notes: the cover engine lives in app/src/cover.js, the
-// editor wiring in app/src/main.js, the screenshot scenes in app/src/shots.js.
+// 1080 x 1080, 1080 x 1350 or 1920 x 1080. Its five sample photos (app/samples/) were all made with an
+// image model and are free to use: boulevard and pier came with the kit for make.fun, while rooftop,
+// neon-pier and palm-drive were generated fresh for this v2 entry. V2 also moves the badge ribbon into
+// the caption band, so it can never land over a panel's face again. Build notes: the cover engine lives
+// in app/src/cover.js, the editor wiring in app/src/main.js, the screenshot scenes in app/src/shots.js.
 //
 // Serve it locally with `node serve.ts`, then open http://localhost:8080.
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:

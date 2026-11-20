@@ -1,7 +1,10 @@
 // Fixed scenes for screenshots: ?shot=editor shows the page with a sample photo loaded;
 // ?shot=cover shows the cover alone, drawn at the export size named by &size=WxH.
-// Optional params: &photo=boulevard|pier, &caption=..., &subtitle=..., &layout=...,
-// &grade=..., &size=1920x1080|1080x1350|1080x1080. window.__shotReady is set once painted.
+// Optional params: &photo=boulevard|pier|rooftop|neon-pier|palm-drive, &caption=...,
+// &subtitle=..., &layout=..., &grade=..., &size=1920x1080|1080x1350|1080x1080.
+// The named photo leads (hero panel first); the other samples cycle through the
+// remaining panels so a multi-panel cover shows the full sample set, not repeats.
+// window.__shotReady is set once painted.
 import { panelCount } from './cover.js';
 
 export function shotSettings(query) {
@@ -35,17 +38,20 @@ export async function runShot(shot, query, app) {
   app.state.title = s.caption;
   app.state.subtitle = s.subtitle;
   await app.ensureFonts();
-  const hero = await app.loadImage(app.SAMPLES[s.photo] || app.SAMPLES.boulevard);
-  const otherName = s.photo === 'pier' ? 'boulevard' : 'pier';
-  const other = await app.loadImage(app.SAMPLES[otherName]);
-  hero.dataset.src = app.SAMPLES[s.photo];
-  other.dataset.src = app.SAMPLES[otherName];
-  app.state.photos = [hero, other];
+  const order = [s.photo, ...Object.keys(app.SAMPLES).filter((name) => name !== s.photo)];
+  const photos = [];
+  for (const name of order) {
+    const img = await app.loadImage(app.SAMPLES[name]);
+    img.dataset.src = app.SAMPLES[name];
+    photos.push(img);
+  }
+  app.state.photos = photos;
   const n = panelCount(s.layout);
   for (let i = 0; i < 9; i++) {
-    app.state.panels[i].photoIndex = i % 2 === 0 ? 0 : 1;
-    // Faces sit in the top half of the sample photos: ease wide panels down so
-    // the hero shows a face, and give the rest a slight upward bias too.
+    app.state.panels[i].photoIndex = i % photos.length;
+    // Faces sit in the top half of the portrait samples: ease wide panels down so
+    // the hero shows a face, and give the rest a slight upward bias too. The
+    // landscape samples are scenery-led, so the same bias is harmless there.
     app.state.panels[i].zoom = s.layout === 'hero-three' && i === 0 ? 1.0 : 1.05;
     app.state.panels[i].oy = s.layout === 'hero-three' && i === 0 ? -0.55 : -0.25;
   }

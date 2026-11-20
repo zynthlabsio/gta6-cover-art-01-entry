@@ -254,15 +254,22 @@ export function drawTitleBlock(ctx, W, H, state) {
   }
   const badge = (state.badge || '').trim();
   if (badge) {
-    const pad = W * 0.02;
-    const bh = H * 0.042;
+    // The ribbon lives inside the caption band at the bottom, never up in the
+    // panel grid: in v1 it sat at the top-right corner and landed right over
+    // the top-right panel's face on grid covers. The band is already darkened
+    // caption space, so the badge can never cover a face in any layout.
+    const pad = W * 0.018;
+    const bh = H * 0.036;
     ctx.font = `700 ${bh * 0.55}px system-ui, sans-serif`;
     const bw = ctx.measureText(badge).width + pad * 2;
     const bx = W - bw - W * 0.035;
-    const by = H * 0.035;
+    const by = y0 + bandH * 0.08;
     ctx.save();
     ctx.translate(bx + bw / 2, by + bh / 2);
     ctx.rotate(-0.06);
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
+    ctx.shadowBlur = bh * 0.35;
+    ctx.shadowOffsetY = bh * 0.08;
     ctx.fillStyle = '#ff2e88';
     ctx.beginPath();
     ctx.roundRect(-bw / 2, -bh / 2, bw, bh, bh / 2);
@@ -270,6 +277,8 @@ export function drawTitleBlock(ctx, W, H, state) {
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = Math.max(2, bh * 0.08);
     ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
     ctx.fillStyle = '#ffffff';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

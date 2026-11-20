@@ -32,6 +32,8 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
 - Multi-panel cover layouts in the classic GTA cover-art style
 - Neon sunset, palm silhouette, and Vice City color grading — all rendered locally
+- Five built-in sample scenes (boulevard, pier, rooftop, neon pier, palm drive), all image-model made
+- Badge ribbon sits in the caption band, so it never covers a face in any layout
 - Bring your own photos: upload, crop, and place them into panels
 - One-click PNG export at square (1080x1080), portrait (1080x1350), and widescreen (1920x1080) sizes
 - Fully offline — no accounts, no uploads, no network calls
