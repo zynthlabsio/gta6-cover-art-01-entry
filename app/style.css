@@ -1,12 +1,65 @@
-html, body { margin: 0; height: 100%; background: #f2f0f4; color: #1d1b22; font: 15px/1.4 system-ui, sans-serif; }
-.app { display: flex; gap: 32px; align-items: center; justify-content: center; height: 100%; padding: 24px; box-sizing: border-box; }
-.controls { display: flex; flex-direction: column; gap: 14px; width: 280px; }
-.controls h1 { margin: 0; font-size: 28px; }
-.controls p { margin: 0; color: #5c5866; }
-label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; }
-input[type=text] { font: inherit; padding: 8px; border: 1px solid #c9c4d1; border-radius: 6px; }
-button { font: inherit; font-weight: 700; padding: 10px; border: 0; border-radius: 6px; background: #1d1b22; color: #fff; cursor: pointer; }
-canvas { width: min(70vh, 60vw); height: min(70vh, 60vw); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2); }
-body.shot-cover .controls { display: none; }
+@font-face { font-family: 'Anton'; src: url('./fonts/Anton-Regular.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Pacifico'; src: url('./fonts/Pacifico-Regular.ttf') format('truetype'); font-display: swap; }
+
+:root {
+  --ink: #f5eefc;
+  --muted: #b9a8cc;
+  --panel: #1c1026;
+  --panel2: #251636;
+  --line: #3d2a55;
+  --pink: #ff2e88;
+  --teal: #19d3da;
+  --amber: #ffb347;
+  --bg: #120a1c;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif; }
+body { display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 22px; background: linear-gradient(90deg, #2b0f3f, #5b0f4d 55%, #0f2a4d); border-bottom: 2px solid var(--pink); }
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 10px; background: linear-gradient(135deg, var(--pink), #ff7b00); font-family: 'Anton', sans-serif; font-size: 20px; color: #fff; letter-spacing: 1px; box-shadow: 0 0 18px rgba(255, 46, 136, 0.55); }
+.brand h1 { margin: 0; font-family: 'Anton', sans-serif; font-size: 26px; letter-spacing: 2px; text-transform: uppercase; color: #fff; text-shadow: 2px 2px 0 var(--pink), 4px 4px 0 rgba(25, 211, 218, 0.6); }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.top-actions button { background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+.top-actions button:hover { border-color: var(--pink); }
+.app { display: flex; gap: 22px; padding: 18px 22px 26px; flex: 1; align-items: flex-start; }
+.controls { width: 330px; flex: none; display: flex; flex-direction: column; gap: 14px; }
+.group { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.group h2 { margin: 0 0 10px; font-family: 'Anton', sans-serif; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; color: var(--amber); }
+.group label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; margin-bottom: 10px; }
+.group label:last-child { margin-bottom: 0; }
+input[type=text], select { font: inherit; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: #160b22; color: var(--ink); }
+input[type=text]:focus, select:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+input[type=range] { width: 100%; accent-color: var(--pink); }
+.file-btn { display: block; text-align: center; background: linear-gradient(135deg, var(--pink), #7b2ff7); color: #fff; font-weight: 800; padding: 11px; border-radius: 9px; cursor: pointer; margin-bottom: 10px; }
+.file-btn input { display: none; }
+.row { display: flex; gap: 8px; margin-bottom: 10px; }
+.row button { flex: 1; }
+button { font: inherit; font-weight: 700; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); color: var(--ink); cursor: pointer; }
+button:hover { border-color: var(--pink); }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; }
+.choice.on { background: var(--pink); border-color: var(--pink); color: #fff; box-shadow: 0 0 14px rgba(255, 46, 136, 0.5); }
+.sw { width: 16px; height: 16px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.5); flex: none; }
+.hint { color: var(--muted); font-size: 12.5px; margin: 0 0 10px; }
+.check { flex-direction: row !important; align-items: center; gap: 8px; font-weight: 600; }
+.check input { accent-color: var(--pink); width: 17px; height: 17px; }
+.exports { display: flex; flex-direction: column; gap: 8px; }
+.exports button { background: linear-gradient(135deg, #ff7b00, var(--pink)); border: 0; color: #fff; padding: 11px; }
+.exports button:hover { filter: brightness(1.12); }
+#status { margin: 10px 0 0; color: #8dffd6; min-height: 1.2em; font-weight: 600; }
+.stage { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; position: sticky; top: 12px; }
+#cover { width: min(72vh, 100%); aspect-ratio: 1 / 1; height: auto; background: #241233; border-radius: 6px; box-shadow: 0 18px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--line); cursor: crosshair; }
+.stage-hint, .stage-note { margin: 0; color: var(--muted); font-size: 13px; text-align: center; }
+.stage-note { font-size: 12px; max-width: 560px; }
+body.shot-cover .topbar, body.shot-cover .controls, body.shot-cover .stage-hint, body.shot-cover .stage-note { display: none; }
 body.shot-cover .app { padding: 0; }
-body.shot-cover canvas { width: 100vw; height: 100vh; box-shadow: none; }
+body.shot-cover .stage { position: static; width: 100%; }
+body.shot-cover #cover { width: 100vw; height: 100vh; aspect-ratio: auto; border-radius: 0; box-shadow: none; }
+button:focus-visible, .file-btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .app { flex-direction: column; }
+  .controls { width: 100%; }
+  .stage { position: static; width: 100%; }
+  .brand h1 { font-size: 20px; }
+}

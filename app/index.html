@@ -3,20 +3,106 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cover Snap</title>
+<title>Neon Coast Cover Studio — GTA-style cover art maker</title>
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">NC</span>
+    <div>
+      <h1>Neon Coast Cover Studio</h1>
+      <p>Turn any photo into multi-panel sunset cover art. Photos never leave your machine.</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button id="undo" type="button" title="Undo">Undo</button>
+    <button id="redo" type="button" title="Redo">Redo</button>
+  </div>
+</header>
 <main class="app">
-  <section class="controls">
-    <h1>Cover Snap</h1>
-    <p>A photo and a caption, made into a square cover.</p>
-    <label>Photo <input id="photo" type="file" accept="image/*"></label>
-    <label>Caption <input id="caption" type="text" maxlength="40" value="Sunset Heist"></label>
-    <button id="export" type="button">Export PNG 1080 x 1080</button>
-    <p id="status" role="status"></p>
+  <aside class="controls" aria-label="Cover controls">
+    <section class="group">
+      <h2>1 · Photos</h2>
+      <label class="file-btn">Add photos from your machine
+        <input id="photos" type="file" accept="image/*" multiple>
+      </label>
+      <div class="row">
+        <button id="sample-boulevard" type="button">Sample: Boulevard</button>
+        <button id="sample-pier" type="button">Sample: Pier</button>
+      </div>
+      <p class="hint">Click a panel in the preview to select it, then drag inside it to pan. New photos go into the selected panel.</p>
+      <div class="row">
+        <button id="fill-all" type="button">Fill all panels with this photo</button>
+        <button id="clear-panel" type="button">Clear panel</button>
+      </div>
+      <label>Selected panel
+        <select id="panel-select"></select>
+      </label>
+      <label>Zoom <span id="zoom-val">1.20×</span>
+        <input id="zoom" type="range" min="1" max="3" step="0.05" value="1.2">
+      </label>
+      <label>Pan horizontally <span id="panx-val">0</span>
+        <input id="panx" type="range" min="-100" max="100" step="1" value="0">
+      </label>
+      <label>Pan vertically <span id="pany-val">0</span>
+        <input id="pany" type="range" min="-100" max="100" step="1" value="0">
+      </label>
+    </section>
+    <section class="group">
+      <h2>2 · Layout</h2>
+      <div class="choices" id="layouts" role="radiogroup" aria-label="Layout">
+        <button type="button" data-layout="hero-three" class="choice on">Hero + 3</button>
+        <button type="button" data-layout="grid4" class="choice">4-panel grid</button>
+        <button type="button" data-layout="grid9" class="choice">9-panel grid</button>
+        <button type="button" data-layout="fullbleed" class="choice">Full-bleed</button>
+        <button type="button" data-layout="tilted" class="choice">Tilted snapshots</button>
+      </div>
+    </section>
+    <section class="group">
+      <h2>3 · Colour grade</h2>
+      <div class="choices" id="grades" role="radiogroup" aria-label="Colour grade">
+        <button type="button" data-grade="neon-sunset" class="choice on"><span class="sw" style="background:linear-gradient(135deg,#ff5e3a,#ff2e88,#7b2ff7)"></span>Neon sunset</button>
+        <button type="button" data-grade="vice-pink" class="choice"><span class="sw" style="background:linear-gradient(135deg,#ff7ad9,#19d3da)"></span>Vice pink / teal</button>
+        <button type="button" data-grade="golden-hour" class="choice"><span class="sw" style="background:linear-gradient(135deg,#ffd166,#ff7b00)"></span>Golden hour</button>
+        <button type="button" data-grade="midnight-neon" class="choice"><span class="sw" style="background:linear-gradient(135deg,#0affef,#b537f2,#ff2e88)"></span>Midnight neon</button>
+        <button type="button" data-grade="noir" class="choice"><span class="sw" style="background:linear-gradient(135deg,#e8e8e8,#222)"></span>Monochrome noir</button>
+      </div>
+    </section>
+    <section class="group">
+      <h2>4 · Caption</h2>
+      <label>Title
+        <input id="title" type="text" maxlength="28" value="SUNSET HEIST">
+      </label>
+      <label>Subtitle (script)
+        <input id="subtitle" type="text" maxlength="40" value="Vice City nights">
+      </label>
+      <label>Badge ribbon
+        <input id="badge" type="text" maxlength="18" value="EST. 2026">
+      </label>
+    </section>
+    <section class="group">
+      <h2>5 · Effects</h2>
+      <label class="check"><input id="fx-grain" type="checkbox" checked> Film grain</label>
+      <label class="check"><input id="fx-vignette" type="checkbox" checked> Vignette</label>
+      <label class="check"><input id="fx-halftone" type="checkbox" checked> Halftone title block</label>
+      <label class="check"><input id="fx-frame" type="checkbox" checked> White panel frames</label>
+    </section>
+    <section class="group">
+      <h2>6 · Export PNG</h2>
+      <div class="exports">
+        <button id="export-square" type="button">Square · 1080 × 1080</button>
+        <button id="export-portrait" type="button">Portrait · 1080 × 1350</button>
+        <button id="export-wide" type="button">Wide · 1920 × 1080</button>
+      </div>
+      <p id="status" role="status"></p>
+    </section>
+  </aside>
+  <section class="stage" aria-label="Live preview">
+    <canvas id="cover" width="1080" height="1080" aria-label="Cover preview"></canvas>
+    <p class="stage-hint">Live preview — click a panel, drag to pan, use the zoom slider to crop.</p>
+    <p class="stage-note">Original artwork made in your browser. No game logos, artwork or fonts — lettering is Anton &amp; Pacifico under the SIL Open Font License.</p>
   </section>
-  <canvas id="cover" width="1080" height="1080" aria-label="The cover"></canvas>
 </main>
 <script type="module" src="./src/main.js"></script>
 </body>
