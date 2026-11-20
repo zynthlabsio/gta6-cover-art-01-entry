@@ -63,3 +63,73 @@ button:focus-visible, .file-btn:focus-visible { outline: 2px solid var(--teal); 
   .stage { position: static; width: 100%; }
   .brand h1 { font-size: 20px; }
 }
+
+/* ---------------------------------------------------------------------------
+   v2 polish — accessibility and editor chrome only.
+   None of the rules below alter the default appearance, layout, colours or
+   cover rendering: focus outlines appear only for keyboard navigation,
+   reduced-motion styles apply only when the visitor requests them, the
+   selection colour applies only to selected text, and the scrollbar rules
+   style the editor's scrollable panels without changing their size or flow.
+   --------------------------------------------------------------------------- */
+
+/* Visible keyboard focus for every interactive element, in the app's
+   existing teal accent (the same colour already used for input focus). */
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+.file-btn:focus-within {
+  outline: 2px solid var(--teal);
+  outline-offset: 2px;
+}
+
+/* Selected text in the app's palette: pink highlight, white foreground,
+   matching the active choice chips above. */
+::selection {
+  background: var(--pink);
+  color: #fff;
+}
+
+/* Thin scrollbars for the editor's scrollable panels (the control column
+   and the page itself), tinted with the existing panel/line palette. */
+.controls,
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) var(--panel);
+}
+.controls::-webkit-scrollbar,
+html::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.controls::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track {
+  background: var(--panel);
+}
+.controls::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+.controls::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--pink);
+}
+
+/* Respect a visitor's reduced-motion request: no transitions or
+   animations anywhere in the editor. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+}
